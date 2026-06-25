@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>نظام الأسطورة للطاقة</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tahoma', 'Arial', sans-serif; }
+        body { background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #app { max-width: 430px; width: 100%; background: #ffffff; min-height: 100vh; box-shadow: 0 0 30px rgba(0,0,0,0.08); position: relative; overflow-y: auto; }
+        .screen { display: none; padding: 16px; padding-bottom: 80px; }
+        .screen.active { display: block; }
+        
+        /* Splash */
+        #screen-splash { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background: #0b1e33; color: white; text-align: center; padding: 20px; }
+        #screen-splash h1 { font-size: 36px; margin-bottom: 10px; letter-spacing: 2px; }
+        #screen-splash .sub { color: #ffd700; font-size: 18px; }
+        .loader { width: 40px; height: 40px; margin: 30px auto; border: 5px solid #2c3e50; border-top: 5px solid #ffd700; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Header */
+        .header { background: #0b1e33; color: white; padding: 14px 16px; border-radius: 0 0 20px 20px; margin: -16px -16px 20px -16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .header h2 { font-size: 17px; font-weight: normal; }
+        .logout-btn { background: #c0392b; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 12px; }
+        .back-btn { background: #34495e; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; font-size: 12px; }
+
+        /* Cards */
+        .card { background: white; border-radius: 16px; padding: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); margin-bottom: 16px; border: 1px solid #eef2f7; cursor: default; }
+        .card.clickable { cursor: pointer; transition: 0.2s; }
+        .card.clickable:active { transform: scale(0.97); background: #f8faff; }
+        .card-title { font-weight: bold; margin-bottom: 12px; color: #0b1e33; border-bottom: 1px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; }
+
+        /* Grids */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .stat-box { background: #f8faff; padding: 14px; border-radius: 12px; text-align: center; border-right: 4px solid #0b1e33; }
+        .stat-box .num { font-size: 24px; font-weight: bold; color: #0b1e33; }
+        .stat-box .label { font-size: 11px; color: #7f8c8d; }
+
+        /* Forms */
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #dce1e8; border-radius: 10px; font-size: 14px; background: #fafcfe; }
+        textarea { resize: vertical; min-height: 50px; }
+        button { background: #0b1e33; color: white; border: none; padding: 12px; border-radius: 12px; font-size: 16px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 4px; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        button.secondary { background: #e67e22; }
+        button.danger { background: #c0392b; }
+        button.outline { background: transparent; color: #0b1e33; border: 2px solid #0b1e33; }
+        button.success { background: #27ae60; }
+        .btn-small { padding: 6px 12px; font-size: 12px; width: auto; display: inline-block; margin: 2px; border-radius: 8px; }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #0b1e33; color: white; padding: 10px; text-align: center; }
+        td { padding: 10px; border-bottom: 1px solid #ecf0f1; text-align: center; }
+        .badge { background: #27ae60; color: white; padding: 2px 12px; border-radius: 20px; font-size: 11px; }
+        .badge.warn { background: #f39c12; }
+        .badge.danger { background: #e74c3c; }
+        .line-tag { background: #2980b9; color: white; padding: 2px 10px; border-radius: 12px; font-size: 10px; }
+
+        /* Receipt */
+        .receipt-box { background: #fefefe; border: 2px dashed #0b1e33; padding: 20px; text-align: center; border-radius: 16px; }
+        .receipt-box h3 { color: #0b1e33; margin-bottom: 8px; }
+
+        .flex { display: flex; gap: 8px; flex-wrap: wrap; }
+        .mt-2 { margin-top: 12px; }
+        .text-center { text-align: center; }
+        .hidden { display: none; }
+
+        /* Modal */
+        #modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999; justify-content:center; align-items:center; padding:20px; backdrop-filter: blur(3px); }
+        #modal-box { background:white; max-width:400px; width:100%; border-radius:24px; padding:24px; max-height:90vh; overflow-y:auto; }
+
+        .notif-badge { background: #e74c3c; color: white; border-radius: 50%; padding: 2px 8px; font-size: 11px; margin-right: 5px; }
+        .line-clickable { cursor: pointer; }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <!-- ==================== SPLASH ==================== -->
+    <div id="screen-splash" class="screen active">
+        <h1>⚡ الأسطورة</h1>
+        <div class="sub">محطة الطاقة الكهربائية</div>
+        <div class="loader"></div>
+        <p style="color:#95a5a6; font-size:13px;">الإصدار 2.0</p>
+        <p style="color:#95a5a6; font-size:12px; margin-top:10px;">تحميل البيانات...</p>
+    </div>
+
+    <!-- ==================== LOGIN ==================== -->
+    <div id="screen-login" class="screen">
+        <div style="padding: 50px 20px; text-align: center;">
+            <h1 style="color:#0b1e33; font-size:32px;">⚡ الأسطورة</h1>
+            <p style="color:#7f8c8d; margin-bottom: 30px;">نظام إدارة محطة الكهرباء</p>
+            <input type="text" id="login-username" placeholder="اسم المستخدم" value="admin">
+            <input type="password" id="login-password" placeholder="كلمة المرور" value="admin">
+            <button onclick="doLogin()" style="background:#0b1e33;">🚪 دخول</button>
+            <p style="margin-top:20px; font-size:11px; color:#bdc3c7;">admin/admin | reader/reader | supervisor/supervisor</p>
+        </div>
+    </div>
+
+    <!-- ==================== DASHBOARD ==================== -->
+    <div id="screen-dashboard" class="screen">
+        <div class="header"><h2>📊 لوحة التحكم</h2><div><button class="logout-btn" onclick="logout()">خروج</button></div></div>
+        <div id="dash-stats" class="grid-2">
+            <div class="stat-box"><div class="num" id="d-total">0</div><div class="label">المشتركين</div></div>
+            <div class="stat-box"><div class="num" id="d-bills">0</div><div class="label">فواتير صادرة</div></div>
+            <div class="stat-box"><div class="num" id="d-paid">0</div><div class="label">مسددة</div></div>
+            <div class="stat-box"><div class="num" id="d-unpaid">0</div><div class="label">غير مسددة</div></div>
+            <div class="stat-box"><div class="num" id="d-revenue">0</div><div class="label">إجمالي الإيرادات</div></div>
+            <div class="stat-box"><div class="num" id="d-consumption">0</div><div class="label">إجمالي الاستهلاك (كيلو)</div></div>
+        </div>
+        <div class="card">
+            <div class="card-title">📌 توزيع الخطوط <button class="btn-small" onclick="navigate('lines')">عرض الكل</button></div>
+            <div id="line-stats-mini" style="font-size:14px;"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">⚡ القائمة الرئيسية</div>
+            <div class="grid-3">
+                <button class="btn-small" onclick="navigate('subscribers')">المشتركون</button>
+                <button class="btn-small" onclick="navigate('meters')">العدادات</button>
+                <button class="btn-small" onclick="navigate('readings')">القراءات</button>
+                <button class="btn-small" onclick="navigate('bills')">الفواتير</button>
+                <button class="btn-small" onclick="navigate('payments')">التحصيل</button>
+                <button class="btn-small" onclick="navigate('delinquents')">المتأخرات</button>
+                <button class="btn-small" onclick="navigate('reports')">التقارير</button>
+                <button class="btn-small" onclick="navigate('settings')">⚙️ إعدادات</button>
+                <button class="btn-small" onclick="showNotification()">🔔 إشعارات</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== LINES ==================== -->
+    <div id="screen-lines" class="screen">
+        <div class="header"><h2>🔌 إدارة الخطوط</h2><button class="back-btn" onclick="navigate('dashboard')">رجوع</button></div>
+        <div id="lines-container"></div>
+    </div>
+
+    <!-- ==================== SUBSCRIBERS ==================== -->
+    <div id="screen-subscribers" class="screen">
+        <div class="header"><h2 id="sub-header-title">👤 المشتركون</h2><button class="back-btn" onclick="navigate('dashboard')">رجوع</button></div>
+        <input type="text" id="search-sub" placeholder="🔍 بحث بالاسم أو العداد" oninput="renderSubscribers()">
+        <button class="secondary" onclick="showAddSub()">+ إضافة مشترك</button>
+        <div class="card" id="sub-list"></div>
+    </div>
+
+    <!-- ==================== METERS ==================== -->
+    <div id="screen-meters" class="screen">
+        <div class="header"><h2>📟 العدادات</h2><button class="back-btn" onclick="navigate('dashboard')">رجوع</button></div>
+        <button class="secondary" onclick="showAddMeter()">+ إضافة عداد</button>
+        <div class="card" id="meter-list"></div>
+    </div>
+
+    <!-- ==================== READINGS ==================== -->
+    <div id="screen-readings" class="screen">
+        <div class="header"><h2>📖 القراءات</h2><button class="back-btn" onclick="navigate('dashboard')">رجوع</button></div>
+        <div class="card">
+            <input type="text" id="reading-meter-num" placeholder="🔢 رقم العداد" oninput="fetchSubByMeter(this.value)">
+            <p id="reading-sub-name" style="color:#0b1e33; font-weight:bold;"></p>
+            <input type="number" id="reading-prev" placeholder="القراءة السابقة" readonly>
+            <input type="number" id="reading-curr" placeholder="القراءة الحالية" oninput="calcConsumption()">
+            <input type="number" id="reading-consum" placeholder="الاستهلاك (كيلو)" readonly>
+            <button onclick="saveReading()">💾 حفظ القراءة</button>
+        </div>
+        <div class="card"><div class="card-title">آخر القراءات</div><div id="recent-readings"></div></div>
+    </div>
+
+    <!-- ==================== BILLS ==================== -->
+    <div id="screen-bills" class="screen">
+        <div class="header"><h2>🧾 الفواتير</h2><button class="back-btn" onclick="navigate('dashboard')">رجوع</button></div>
+        <button class="secondary" onclick="generateBillsForAll()">⚡ إصدار الفواتير (للجميع)</button>
+        <div class="card" id="bill-list"></div>
+    </div>
+
+    <!-- ==================== PAYMENTS ==================== -->
+    <div id="screen-payments" class="screen">
+        <div class="header"><h2>💰 التحصيل</h2><button class="back-btn" onclick="navigate('dashboard')">رجوع</button></div>
+        <div class="card">
+            <input type="text" id="pay-bill-id" placeholder="رقم الفاتورة" oninput="fetchBillForPay(this.value)">
+            <p id="pay-info" style="font-size:14px; color:#333;"></p>
+            <input type="number" id="pay-amount" placeholder="المبلغ المدفوع">
+            <select id="pay-method"><option value="نقدي">نقدي</option><option value="تحويل بنكي">تحويل بنكي</option><option value="محفظة إلكترونية">محفظة إلكترونية</option></select>
+            <button onclick="savePayment()">💵 تأكيد الدفع</button>
+        </div>
+        <div class="card"><div class="card-title">آخر المدفوعات</div><div id="recent-payments"></div></div>
+    </div>
+
+    <!-- ==================== DELINQUENTS ==================== -->
+    <div id="screen-delinquents" class="screen">
+        <div class="header"><h2>⏳ المتأخرات</h2><button class="back-btn" onclick="navigate('dashboard')">رجوع</button></div>
+        <div class="card" id="delinquent-list"></div>
+    </div>
+
+    <!-- ==================== REPORTS ==================== -->
+    <div id="screen-reports" class="screen">
+        <div class="header"><h2>📈 التقارير</h2><button class="back-btn" onclick="navigate('dashboard')">رجوع</button></div>
+        <div class="card"><div class="card-title">👥 المشتركين</div><div id="report-total-sub"></div></div>
+        <div class="card"><div class="card-title">💰 الإيرادات (الشهر الماضي)</div><div id="report-month-rev"></div></div>
+        <div class="card"><div class="card-title">📊 استهلاك الخطوط</div><div id="report-line-consumption"></div></div>
+        <div class="card"><div class="card-title">📟 حالة العدادات</div><div id="report-meter-status"></div></div>
+    </div>
+
+    <!-- ==================== SETTINGS ==================== -->
+    <div id="screen-settings" class="screen">
+        <div class="header"><h2>⚙️ الإعدادات</h2><button class="back-btn" onclick="navigate('dashboard')">رجوع</button></div>
+        <div class="card">
+            <div class="card-title">تعرفة الكهرباء</div>
+            <select id="tariff-type" onchange="toggleTariffMode()">
+                <option value="fixed">سعر ثابت</option>
+                <option value="slab">شرائح متدرجة</option>
+            </select>
+            <div id="fixed-setting"><input type="number" id="fixed-rate" placeholder="سعر الكيلو" value="80"></div>
+            <div id="slab-setting" class="hidden">
+                <input type="number" id="slab1" placeholder="0-100 سعر" value="80">
+                <input type="number" id="slab2" placeholder="101-200 سعر" value="120">
+                <input type="number" id="slab3" placeholder="201-500 سعر" value="150">
+                <input type="number" id="slab4" placeholder="أكثر من 500 سعر" value="200">
+            </div>
+            <button onclick="saveSettings()">💾 حفظ</button>
+        </div>
+        <div class="card">
+            <div class="card-title">💾 النسخ الاحتياطي</div>
+            <button class="success" onclick="exportData()">📤 تصدير قاعدة البيانات</button>
+            <button class="outline" onclick="document.getElementById('importFile').click()">📥 استيراد قاعدة البيانات</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        </div>
+        <div class="card"><div class="card-title">👤 صلاحيتي</div><p id="user-role-display">-</p></div>
+    </div>
+
+    <!-- ==================== MODAL ==================== -->
+    <div id="modal-overlay" onclick="if(event.target===this) closeModal()">
+        <div id="modal-box">
+            <h3 id="modal-title" style="margin-bottom:16px;">العنوان</h3>
+            <div id="modal-body"></div>
+            <button onclick="closeModal()" class="danger" style="margin-top:12px;">إغلاق</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ============================================================
+//  CORE HELPERS
+// ============================================================
+const LINES = ['الخط الأول', 'الخط الثاني', 'الخط الثالث', 'الخط الرابع', 'الخط الخامس'];
+function getData(key) { try { return JSON.parse(localStorage.getItem('elec_'+key)) || []; } catch(e){ return []; } }
+function setData(key, data) { localStorage.setItem('elec_'+key, JSON.stringify(data)); }
+function genId() { return Date.now() + Math.floor(Math.random()*1000); }
+let currentUser = null;
+let currentFilterLine = null; // used for filtering subscribers by line
+
+// ------------------- SPLASH & LOGIN -------------------
+window.onload = function() {
+    setTimeout(() => {
+        document.getElementById('screen-splash').classList.remove('active');
+        document.getElementById('screen-login').classList.add('active');
+    }, 1800);
+};
+
+function doLogin() {
+    const u = document.getElementById('login-username').value.trim();
+    const p = document.getElementById('login-password').value.trim();
+    let users = getData('users');
+    if(users.length===0){
+        users = [
+            {id:1, username:'admin', password:'admin', role:'مدير النظام'},
+            {id:2, username:'accountant', password:'accountant', role:'محاسب'},
+            {id:3, username:'reader', password:'reader', role:'قارئ عدادات'},
+            {id:4, username:'supervisor', password:'supervisor', role:'مشرف'}
+        ];
+        setData('users', users);
+    }
+    const found = users.find(x => x.username===u && x.password===p);
+    if(found){ currentUser = found; navigate('dashboard'); renderAll(); } 
+    else { alert('بيانات دخول خاطئة'); }
+}
+function logout() { currentUser = null; navigate('login'); }
+
+// ------------------- NAVIGATION & PERMISSIONS -------------------
+function navigate(screen, params) {
+    // Reset filter if not navigating to subscribers with a line filter
+    if(screen !== 'subscribers') {
+        currentFilterLine = null;
+    } else if(params && params.line) {
+        currentFilterLine = params.line;
+    } else {
+        currentFilterLine = null;
+    }
+
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('screen-'+screen);
+    if(target) target.classList.add('active');
+    if(screen !== 'login' && !currentUser) { navigate('login'); return; }
+    const role = currentUser ? currentUser.role : '';
+    // Permissions
+    if(screen === 'settings' && !['مدير النظام'].includes(role)) { alert('غير مسموح! الإعدادات للمدير فقط.'); navigate('dashboard'); return; }
+    if(screen === 'payments' && !['مدير النظام','محاسب'].includes(role)) { alert('غير مسموح! التحصيل للمحاسب أو المدير.'); navigate('dashboard'); return; }
+    if(screen === 'readings' && !['مدير النظام','قارئ عدادات'].includes(role)) { alert('غير مسموح! القراءات للقارئ أو المدير.'); navigate('dashboard'); return; }
+    if(screen === 'delinquents' && !['مدير النظام','محاسب','مشرف'].includes(role)) { alert('غير مسموح!'); navigate('dashboard'); return; }
+    renderAll();
+}
+
+function renderAll() {
+    renderDashboard();
+    renderLines();
+    renderSubscribers();
+    renderMeters();
+    renderReadings();
+    renderBills();
+    renderPayments();
+    renderDelinquents();
+    renderReports();
+    renderSettings();
+}
+
+// ============================================================
+//  DASHBOARD
+// ============================================================
+function renderDashboard() {
+    const subs = getData('subscribers');
+    const bills = getData('bills');
+    const pays = getData('payments');
+    const readings = getData('readings');
+    document.getElementById('d-total').innerText = subs.length;
+    document.getElementById('d-bills').innerText = bills.length;
+    const paid = bills.filter(b => b.status === 'مدفوع').length;
+    document.getElementById('d-paid').innerText = paid;
+    document.getElementById('d-unpaid').innerText = bills.length - paid;
+    const totalRev = pays.reduce((s,p) => s + Number(p.amount), 0);
+    document.getElementById('d-revenue').innerText = totalRev.toLocaleString();
+    const totalCons = readings.reduce((s,r) => s + Number(r.consumption), 0);
+    document.getElementById('d-consumption').innerText = totalCons.toFixed(0);
+
+    let html = '';
+    for(let i=0; i<5; i++){
+        const count = subs.filter(s => s.line_id === i+1).length;
+        html += `<span onclick="navigate('subscribers', {line: ${i+1}})" style="display:inline-block; margin:4px; background:#ecf0f1; padding:4px 12px; border-radius:20px; cursor:pointer;">${LINES[i]}: ${count}</span>`;
+    }
+    document.getElementById('line-stats-mini').innerHTML = html;
+}
+
+// ============================================================
+//  LINES (Full Management) - Clickable cards
+// ============================================================
+function renderLines() {
+    const subs = getData('subscribers');
+    const readings = getData('readings');
+    const bills = getData('bills');
+    let html = '';
+    for(let i=0; i<5; i++){
+        const lineSubs = subs.filter(s => s.line_id === i+1);
+        const totalCons = lineSubs.reduce((sum, s) => {
+            const r = readings.filter(r => r.subscriber_id === s.id);
+            return sum + r.reduce((s2, r2) => s2 + Number(r2.consumption), 0);
+        }, 0);
+        const totalBills = lineSubs.reduce((sum, s) => {
+            const b = bills.filter(b => b.subscriber_id === s.id && b.status !== 'مدفوع');
+            return sum + b.reduce((s2, b2) => s2 + Number(b2.amount), 0);
+        }, 0);
+        html += `<div class="card clickable" onclick="navigate('subscribers', {line: ${i+1}})" style="border-right: 4px solid #2980b9;">
+            <div class="card-title">🔌 ${LINES[i]} <span style="font-size:12px; color:#2980b9;">👆 اضغط للعرض</span></div>
+            <p>👥 المشتركين: <strong>${lineSubs.length}</strong></p>
+            <p>⚡ الاستهلاك الكلي: <strong>${totalCons.toFixed(0)} كيلو</strong></p>
+            <p>💰 المتأخرات: <strong>${totalBills.toLocaleString()} ريال</strong></p>
+        </div>`;
+    }
+    document.getElementById('lines-container').innerHTML = html || '<p>لا توجد خطوط بعد</p>';
+}
+
+// ============================================================
+//  SUBSCRIBERS (with line filter)
+// ============================================================
+function renderSubscribers() {
+    const subs = getData('subscribers');
+    let filtered = subs;
+    // Apply line filter
+    if(currentFilterLine !== null) {
+        filtered = filtered.filter(s => s.line_id === currentFilterLine);
+        document.getElementById('sub-header-title').innerHTML = `👤 مشتركي ${LINES[currentFilterLine-1]}`;
+    } else {
+        document.getElementById('sub-header-title').innerHTML = '👤 جميع المشتركين';
+    }
+    // Apply search
+    const q = document.getElementById('search-sub')?.value?.toLowerCase() || '';
+    if(q) {
+        filtered = filtered.filter(s => s.name.includes(q) || s.meter_num.includes(q));
+    }
+
+    let html = `<table><tr><th>#</th><th>الاسم</th><th>العداد</th><th>الخط</th><th>الحالة</th><th></th></tr>`;
+    filtered.forEach((s,i) => {
+        html += `<tr><td>${i+1}</td><td>${s.name}</td><td>${s.meter_num}</td>
+        <td><span class="line-tag">${LINES[s.line_id-1]||'?'}</span></td>
+        <td><span class="badge ${s.status==='فعال'?'':'warn'}">${s.status}</span></td>
+        <td><button class="btn-small" onclick="viewSubDetail(${s.id})">👁️</button>
+        <button class="btn-small" onclick="editSub(${s.id})">✏️</button>
+        <button class="btn-small danger" onclick="deleteSub(${s.id})">🗑️</button></td></tr>`;
+    });
+    html += `</table>`;
+    document.getElementById('sub-list').innerHTML = html;
+}
+
+function viewSubDetail(id) {
+    const subs = getData('subscribers');
+    const s = subs.find(x => x.id === id);
+    if(!s) return;
+    const readings = getData('readings').filter(r => r.subscriber_id === id).sort((a,b) => b.id - a.id);
+    const bills = getData('bills').filter(b => b.subscriber_id === id).sort((a,b) => b.id - a.id);
+    const lastReading = readings[0];
+    const lastBill = bills[0];
+    const totalDue = bills.filter(b => b.status !== 'مدفوع').reduce((sum, b) => sum + b.amount, 0);
+
+    openModal(`👤 تفاصيل ${s.name}`, `
+        <div style="text-align:right;">
+            <p><strong>رقم المشترك:</strong> ${s.id}</p>
+            <p><strong>الهاتف:</strong> ${s.phone||'-'}</p>
+            <p><strong>العنوان:</strong> ${s.address||'-'}</p>
+            <p><strong>رقم الهوية:</strong> ${s.national_id||'-'}</p>
+            <p><strong>الخط:</strong> ${LINES[s.line_id-1]}</p>
+            <p><strong>العداد:</strong> ${s.meter_num}</p>
+            <p><strong>الحالة:</strong> ${s.status}</p>
+            <hr>
+            <p><strong>آخر قراءة:</strong> ${lastReading ? lastReading.current_reading : 'لا توجد'}</p>
+            <p><strong>آخر فاتورة:</strong> ${lastBill ? lastBill.amount.toLocaleString() + ' ريال' : 'لا توجد'}</p>
+            <p><strong>المبلغ المتبقي:</strong> <span style="color:${totalDue>0?'red':'green'}">${totalDue.toLocaleString()} ريال</span></p>
+            ${totalDue > 0 ? `<button class="secondary" onclick="closeModal(); document.getElementById('pay-bill-id').value='${lastBill?.id||''}'; navigate('payments');">💰 دفع الآن</button>` : ''}
+        </div>
+    `);
+}
+
+function showAddSub() {
+    openModal('إضافة مشترك', `
+        <input type="text" id="f-sub-name" placeholder="الاسم *">
+        <input type="text" id="f-sub-phone" placeholder="رقم الهاتف">
+        <textarea id="f-sub-address" placeholder="العنوان"></textarea>
+        <input type="text" id="f-sub-national" placeholder="رقم الهوية">
+        <select id="f-sub-line"><option value="1">${LINES[0]}</option><option value="2">${LINES[1]}</option><option value="3">${LINES[2]}</option><option value="4">${LINES[3]}</option><option value="5">${LINES[4]}</option></select>
+        <select id="f-sub-type"><option value="منزلي">منزلي</option><option value="تجاري">تجاري</option><option value="صناعي">صناعي</option></select>
+        <input type="text" id="f-sub-meter" placeholder="رقم العداد (فريد) *">
+        <select id="f-sub-status"><option value="فعال">فعال</option><option value="موقوف">موقوف</option><option value="مفصول">مفصول</option></select>
+        <button onclick="saveSub()">حفظ</button>
+    `);
+}
+function saveSub() {
+    const name = document.getElementById('f-sub-name').value.trim();
+    const meter = document.getElementById('f-sub-meter').value.trim();
+    if(!name || !meter) return alert('الاسم ورقم العداد مطلوبان');
+    const subs = getData('subscribers');
+    if(subs.find(s => s.meter_num === meter)) return alert('رقم العداد موجود');
+    subs.push({
+        id: genId(), name, phone: document.getElementById('f-sub-phone').value,
+        address: document.getElementById('f-sub-address').value,
+        national_id: document.getElementById('f-sub-national').value,
+        line_id: parseInt(document.getElementById('f-sub-line').value),
+        type: document.getElementById('f-sub-type').value,
+        meter_num: meter, status: document.getElementById('f-sub-status').value
+    });
+    setData('subscribers', subs);
+    closeModal(); renderSubscribers(); renderDashboard(); renderLines();
+}
+function editSub(id) {
+    const subs = getData('subscribers');
+    const s = subs.find(x => x.id === id); if(!s) return;
+    openModal('تعديل مشترك', `
+        <input type="text" id="f-sub-name" value="${s.name}">
+        <input type="text" id="f-sub-phone" value="${s.phone||''}">
+        <textarea id="f-sub-address">${s.address||''}</textarea>
+        <input type="text" id="f-sub-national" value="${s.national_id||''}">
+        <select id="f-sub-line"><option value="1" ${s.line_id===1?'selected':''}>${LINES[0]}</option><option value="2" ${s.line_id===2?'selected':''}>${LINES[1]}</option><option value="3" ${s.line_id===3?'selected':''}>${LINES[2]}</option><option value="4" ${s.line_id===4?'selected':''}>${LINES[3]}</option><option value="5" ${s.line_id===5?'selected':''}>${LINES[4]}</option></select>
+        <select id="f-sub-type"><option value="منزلي" ${s.type==='منزلي'?'selected':''}>منزلي</option><option value="تجاري" ${s.type==='تجاري'?'selected':''}>تجاري</option><option value="صناعي" ${s.type==='صناعي'?'selected':''}>صناعي</option></select>
+        <input type="text" id="f-sub-meter" value="${s.meter_num}" readonly>
+        <select id="f-sub-status"><option value="فعال" ${s.status==='فعال'?'selected':''}>فعال</option><option value="موقوف" ${s.status==='موقوف'?'selected':''}>موقوف</option><option value="مفصول" ${s.status==='مفصول'?'selected':''}>مفصول</option></select>
+        <button onclick="updateSub(${id})">تحديث</button>
+    `);
+}
+function updateSub(id) {
+    const subs = getData('subscribers');
+    const idx = subs.findIndex(x => x.id === id); if(idx===-1) return;
+    subs[idx].name = document.getElementById('f-sub-name').value.trim();
+    subs[idx].phone = document.getElementById('f-sub-phone').value;
+    subs[idx].address = document.getElementById('f-sub-address').value;
+    subs[idx].national_id = document.getElementById('f-sub-national').value;
+    subs[idx].line_id = parseInt(document.getElementById('f-sub-line').value);
+    subs[idx].type = document.getElementById('f-sub-type').value;
+    subs[idx].status = document.getElementById('f-sub-status').value;
+    setData('subscribers', subs);
+    closeModal(); renderSubscribers(); renderDashboard(); renderLines();
+}
+function deleteSub(id) {
+    if(!confirm('حذف المشترك؟')) return;
+    let subs = getData('subscribers');
+    subs = subs.filter(s => s.id !== id);
+    setData('subscribers', subs);
+    renderSubscribers(); renderDashboard(); renderLines();
+}
+
+// ============================================================
+//  METERS (same as before, enhanced)
+// ============================================================
+function renderMeters() {
+    const meters = getData('meters');
+    let html = `<table><tr><th>رقم العداد</th><th>النوع</th><th>السعة</th><th>التاريخ</th><th>الحالة</th><th></th></tr>`;
+    meters.forEach(m => {
+        html += `<tr><td>${m.meter_number}</td><td>${m.type||'قياسي'}</td><td>${m.capacity||'-'}</td>
+        <td>${m.installation_date||'-'}</td>
+        <td><span class="badge ${m.status==='فعال'?'':'warn'}">${m.status}</span></td>
+        <td><button class="btn-small danger" onclick="deleteMeter(${m.id})">🗑️</button></td></tr>`;
+    });
+    html += `</table>`;
+    document.getElementById('meter-list').innerHTML = html;
+}
+function showAddMeter() {
+    openModal('إضافة عداد', `
+        <input type="text" id="f-meter-num" placeholder="رقم العداد *">
+        <input type="text" id="f-meter-type" placeholder="النوع (أحادي/ثلاثي)">
+        <input type="text" id="f-meter-cap" placeholder="السعة (مثل 10A)">
+        <input type="date" id="f-meter-date">
+        <select id="f-meter-status"><option value="فعال">فعال</option><option value="معطل">معطل</option><option value="صيانة">صيانة</option><option value="مفصول">مفصول</option></select>
+        <button onclick="saveMeter()">حفظ</button>
+    `);
+}
+function saveMeter() {
+    const num = document.getElementById('f-meter-num').value.trim();
+    if(!num) return alert('رقم العداد مطلوب');
+    const meters = getData('meters');
+    if(meters.find(m => m.meter_number === num)) return alert('موجود');
+    meters.push({
+        id: genId(), meter_number: num, type: document.getElementById('f-meter-type').value,
+        capacity: document.getElementById('f-meter-cap').value,
+        installation_date: document.getElementById('f-meter-date').value || new Date().toISOString().split('T')[0],
+        status: document.getElementById('f-meter-status').value
+    });
+    setData('meters', meters);
+    closeModal(); renderMeters(); renderDashboard();
+}
+function deleteMeter(id) {
+    if(!confirm('حذف العداد؟')) return;
+    let meters = getData('meters');
+    meters = meters.filter(m => m.id !== id);
+    setData('meters', meters);
+    renderMeters();
+}
+
+// ============================================================
+//  READINGS
+// ============================================================
+function fetchSubByMeter(meterNum) {
+    const subs = getData('subscribers');
+    const s = subs.find(x => x.meter_num === meterNum);
+    document.getElementById('reading-sub-name').innerText = s ? `👤 ${s.name} (${s.meter_num})` : '⚠️ عداد غير مسجل';
+    if(s){
+        const readings = getData('readings').filter(r => r.subscriber_id === s.id);
+        const last = readings.sort((a,b) => b.id - a.id)[0];
+        document.getElementById('reading-prev').value = last ? last.current_reading : 0;
+    } else { document.getElementById('reading-prev').value = 0; }
+    document.getElementById('reading-consum').value = 0;
+}
+function calcConsumption() {
+    const prev = parseFloat(document.getElementById('reading-prev').value) || 0;
+    const curr = parseFloat(document.getElementById('reading-curr').value) || 0;
+    if(curr >= prev) document.getElementById('reading-consum').value = (curr - prev).toFixed(2);
+    else document.getElementById('reading-consum').value = 0;
+}
+function saveReading() {
+    const meterNum = document.getElementById('reading-meter-num').value.trim();
+    const subs = getData('subscribers');
+    const s = subs.find(x => x.meter_num === meterNum);
+    if(!s) return alert('العداد غير مسجل لمشترك');
+    const curr = parseFloat(document.getElementById('reading-curr').value);
+    if(!curr || curr<0) return alert('أدخل قراءة حالية صحيحة');
+    const prev = parseFloat(document.getElementById('reading-prev').value) || 0;
+    const consum = parseFloat(document.getElementById('reading-consum').value) || 0;
+    const readings = getData('readings');
+    readings.push({
+        id: genId(), subscriber_id: s.id, previous_reading: prev,
+        current_reading: curr, consumption: consum,
+        reading_date: new Date().toISOString().split('T')[0]
+    });
+    setData('readings', readings);
+    alert('✅ تم حفظ القراءة');
+    document.getElementById('reading-curr').value = '';
+    document.getElementById('reading-consum').value = '';
+    fetchSubByMeter(meterNum);
+    renderReadings(); renderDashboard(); renderLines();
+}
+function renderReadings() {
+    const readings = getData('readings').slice(-10).reverse();
+    const subs = getData('subscribers');
+    let html = `<table><tr><th>المشترك</th><th>سابق</th><th>حالي</th><th>استهلاك</th><th>التاريخ</th></tr>`;
+    readings.forEach(r => {
+        const s = subs.find(x => x.id === r.subscriber_id);
+        html += `<tr><td>${s?s.name:'?'}</td><td>${r.previous_reading}</td><td>${r.current_reading}</td><td>${r.consumption}</td><td>${r.reading_date}</td></tr>`;
+    });
+    html += `</table>`;
+    document.getElementById('recent-readings').innerHTML = html;
+}
+
+// ============================================================
+//  BILLS & TARIFF
+// ============================================================
+function calcTariff(consumption) {
+    const settings = getData('settings');
+    if(settings.tariff === 'fixed'){
+        return consumption * (parseFloat(settings.fixed_rate) || 80);
+    } else {
+        const s1=parseFloat(settings.slab1)||80, s2=parseFloat(settings.slab2)||120, s3=parseFloat(settings.slab3)||150, s4=parseFloat(settings.slab4)||200;
+        let total=0, c=consumption;
+        if(c > 500) { total += (c-500)*s4; c=500; }
+        if(c > 200) { total += (c-200)*s3; c=200; }
+        if(c > 100) { total += (c-100)*s2; c=100; }
+        total += c * s1;
+        return total;
+    }
+}
+function generateBillsForAll() {
+    const subs = getData('subscribers');
+    const readings = getData('readings');
+    let bills = getData('bills');
+    let count=0;
+    subs.forEach(s => {
+        const subReadings = readings.filter(r => r.subscriber_id === s.id).sort((a,b) => b.id - a.id);
+        if(subReadings.length === 0) return;
+        const last = subReadings[0];
+        if(bills.find(b => b.reading_id === last.id)) return;
+        const amount = calcTariff(last.consumption);
+        const extra = 500;
+        bills.push({
+            id: genId(), subscriber_id: s.id, reading_id: last.id,
+            amount: amount + extra, due_date: new Date(Date.now()+7*24*60*60*1000).toISOString().split('T')[0],
+            status: 'غير مدفوع', consumption: last.consumption, extra_fees: extra, base_amount: amount
+        });
+        count++;
+    });
+    setData('bills', bills);
+    alert(`تم توليد ${count} فاتورة`);
+    renderBills(); renderDashboard();
+}
+function renderBills() {
+    const bills = getData('bills').slice(-20).reverse();
+    const subs = getData('subscribers');
+    let html = `<table><tr><th>#</th><th>المشترك</th><th>الاستهلاك</th><th>المبلغ</th><th>الحالة</th><th></th></tr>`;
+    bills.forEach((b,i) => {
+        const s = subs.find(x => x.id === b.subscriber_id);
+        html += `<tr><td>${i+1}</td><td>${s?s.name:'?'}</td><td>${b.consumption||'-'}</td>
+        <td>${b.amount.toLocaleString()}</td>
+        <td><span class="badge ${b.status==='مدفوع'?'':'warn'}">${b.status}</span></td>
+        <td><button class="btn-small" onclick="viewBill(${b.id})">👁️</button>
+        ${b.status!=='مدفوع'?`<button class="btn-small secondary" onclick="quickPay(${b.id})">💰</button>`:''}</td></tr>`;
+    });
+    html += `</table>`;
+    document.getElementById('bill-list').innerHTML = html;
+}
+function viewBill(id) {
+    const bills = getData('bills');
+    const b = bills.find(x => x.id === id);
+    if(!b) return;
+    const subs = getData('subscribers');
+    const s = subs.find(x => x.id === b.subscriber_id);
+    openModal('🧾 فاتورة', `
+        <div class="receipt-box">
+            <h3>⚡ محطة الأسطورة</h3>
+            <p>فاتورة رقم: ${b.id}</p><hr>
+            <p><strong>المشترك:</strong> ${s?s.name:'?'}</p>
+            <p><strong>الاستهلاك:</strong> ${b.consumption||0} كيلو</p>
+            <p><strong>قيمة الاستهلاك:</strong> ${(b.base_amount||0).toLocaleString()} ريال</p>
+            <p><strong>رسوم خدمة:</strong> ${(b.extra_fees||0).toLocaleString()} ريال</p>
+            <h2 style="color:#0b1e33;">الإجمالي: ${b.amount.toLocaleString()} ريال</h2>
+            <p>الحالة: ${b.status}</p>
+            <p>تاريخ الاستحقاق: ${b.due_date}</p>
+            <button onclick="window.print()">🖨️ طباعة</button>
+            ${b.status!=='مدفوع'?`<button class="secondary" onclick="closeModal(); quickPay(${b.id})">💰 دفع</button>`:''}
+        </div>
+    `);
+}
+
+// ============================================================
+//  PAYMENTS
+// ============================================================
+function fetchBillForPay(billId) {
+    const bills = getData('bills');
+    const b = bills.find(x => x.id == billId);
+    if(b){
+        const subs = getData('subscribers');
+        const s = subs.find(x => x.id === b.subscriber_id);
+        document.getElementById('pay-info').innerHTML = `👤 ${s?s.name:'?'} | المبلغ: ${b.amount} ريال | الحالة: ${b.status}`;
+        document.getElementById('pay-amount').value = b.amount;
+    } else { document.getElementById('pay-info').innerHTML = '❌ فاتورة غير موجودة'; }
+}
+function savePayment() {
+    const billId = document.getElementById('pay-bill-id').value.trim();
+    if(!billId) return alert('أدخل رقم الفاتورة');
+    const bills = getData('bills');
+    const idx = bills.findIndex(b => b.id == billId);
+    if(idx === -1) return alert('الفاتورة غير موجودة');
+    if(bills[idx].status === 'مدفوع') return alert('مدفوعة مسبقاً');
+    const amount = parseFloat(document.getElementById('pay-amount').value);
+    if(!amount || amount <= 0) return alert('أدخل مبلغ صحيح');
+    const method = document.getElementById('pay-method').value;
+    const payments = getData('payments');
+    payments.push({
+        id: genId(), bill_id: bills[idx].id, amount: amount,
+        method: method, date: new Date().toISOString()
+    });
+    bills[idx].status = 'مدفوع';
+    setData('bills', bills);
+    setData('payments', payments);
+    // Show receipt
+    const s = getData('subscribers').find(x => x.id === bills[idx].subscriber_id);
+    alert(`✅ تم الدفع بنجاح!\nالسند: ${genId()}\nالمشترك: ${s?s.name:'?'}\nالمبلغ: ${amount.toLocaleString()} ريال`);
+    document.getElementById('pay-bill-id').value = '';
+    document.getElementById('pay-info').innerHTML = '';
+    document.getElementById('pay-amount').value = '';
+    renderPayments(); renderBills(); renderDashboard(); renderDelinquents();
+}
+function quickPay(billId) {
+    document.getElementById('pay-bill-id').value = billId;
+    navigate('payments');
+    fetchBillForPay(billId);
+}
+function renderPayments() {
+    const pays = getData('payments').slice(-10).reverse();
+    const bills = getData('bills');
+    const subs = getData('subscribers');
+    let html = `<table><tr><th>السند</th><th>المشترك</th><th>المبلغ</th><th>الطريقة</th><th>التاريخ</th></tr>`;
+    pays.forEach(p => {
+        const b = bills.find(x => x.id === p.bill_id);
+        const s = subs.find(x => x.id === b?.subscriber_id);
+        html += `<tr><td>${p.id}</td><td>${s?s.name:'?'}</td><td>${p.amount.toLocaleString()}</td><td>${p.method}</td><td>${new Date(p.date).toLocaleDateString()}</td></tr>`;
+    });
+    html += `</table>`;
+    document.getElementById('recent-payments').innerHTML = html;
+}
+
+// ============================================================
+//  DELINQUENTS
+// ============================================================
+function renderDelinquents() {
+    const bills = getData('bills').filter(b => b.status !== 'مدفوع');
+    const subs = getData('subscribers');
+    let html = '';
+    if(bills.length === 0) { html = '<p>🎉 لا يوجد متأخرات</p>'; }
+    else {
+        const grouped = {};
+        bills.forEach(b => {
+            if(!grouped[b.subscriber_id]) grouped[b.subscriber_id] = [];
+            grouped[b.subscriber_id].push(b);
+        });
+        html = `<table><tr><th>المشترك</th><th>عدد الفواتير</th><th>إجمالي الدين</th></tr>`;
+        Object.keys(grouped).forEach(id => {
+            const s = subs.find(x => x.id == id);
+            const total = grouped[id].reduce((sum, b) => sum + b.amount, 0);
+            html += `<tr><td>${s?s.name:'?'}</td><td>${grouped[id].length}</td><td><span style="color:red;">${total.toLocaleString()} ريال</span></td></tr>`;
+        });
+        html += `</table>`;
+    }
+    document.getElementById('delinquent-list').innerHTML = html;
+}
+
+// ============================================================
+//  REPORTS
+// ============================================================
+function renderReports() {
+    const subs = getData('subscribers');
+    document.getElementById('report-total-sub').innerHTML = `إجمالي: ${subs.length} | فعال: ${subs.filter(s=>s.status==='فعال').length} | موقوف: ${subs.filter(s=>s.status!=='فعال').length}`;
+    
+    const bills = getData('bills');
+    const monthAgo = new Date(); monthAgo.setMonth(monthAgo.getMonth()-1);
+    const monthRev = bills.filter(b => new Date(b.due_date) > monthAgo && b.status === 'مدفوع').reduce((s,b) => s + b.amount, 0);
+    document.getElementById('report-month-rev').innerHTML = `${monthRev.toLocaleString()} ريال`;
+
+    const readings = getData('readings');
+    let lineHtml = '';
+    for(let i=0; i<5; i++){
+        const lineSubs = subs.filter(s => s.line_id === i+1);
+        const cons = lineSubs.reduce((sum, s) => {
+            const r = readings.filter(r => r.subscriber_id === s.id);
+            return sum + r.reduce((s2, r2) => s2 + Number(r2.consumption), 0);
+        }, 0);
+        lineHtml += `<p>${LINES[i]}: ${cons.toFixed(0)} كيلو</p>`;
+    }
+    document.getElementById('report-line-consumption').innerHTML = lineHtml;
+
+    const meters = getData('meters');
+    document.getElementById('report-meter-status').innerHTML = `
+        فعال: ${meters.filter(m=>m.status==='فعال').length} |
+        معطل: ${meters.filter(m=>m.status==='معطل').length} |
+        صيانة: ${meters.filter(m=>m.status==='صيانة').length} |
+        مفصول: ${meters.filter(m=>m.status==='مفصول').length}
+    `;
+}
+
+// ============================================================
+//  SETTINGS & BACKUP
+// ============================================================
+function renderSettings() {
+    const settings = getData('settings');
+    document.getElementById('user-role-display').innerText = currentUser ? currentUser.role : '-';
+    if(settings.tariff === 'fixed') {
+        document.getElementById('tariff-type').value = 'fixed';
+        document.getElementById('fixed-setting').style.display = 'block';
+        document.getElementById('slab-setting').style.display = 'none';
+        document.getElementById('fixed-rate').value = settings.fixed_rate || 80;
+    } else {
+        document.getElementById('tariff-type').value = 'slab';
+        document.getElementById('fixed-setting').style.display = 'none';
+        document.getElementById('slab-setting').style.display = 'block';
+        document.getElementById('slab1').value = settings.slab1 || 80;
+        document.getElementById('slab2').value = settings.slab2 || 120;
+        document.getElementById('slab3').value = settings.slab3 || 150;
+        document.getElementById('slab4').value = settings.slab4 || 200;
+    }
+}
+function toggleTariffMode() {
+    const val = document.getElementById('tariff-type').value;
+    document.getElementById('fixed-setting').style.display = val === 'fixed' ? 'block' : 'none';
+    document.getElementById('slab-setting').style.display = val === 'slab' ? 'block' : 'none';
+}
+function saveSettings() {
+    const tariff = document.getElementById('tariff-type').value;
+    const settings = { tariff };
+    if(tariff === 'fixed') settings.fixed_rate = parseFloat(document.getElementById('fixed-rate').value) || 80;
+    else {
+        settings.slab1 = parseFloat(document.getElementById('slab1').value) || 80;
+        settings.slab2 = parseFloat(document.getElementById('slab2').value) || 120;
+        settings.slab3 = parseFloat(document.getElementById('slab3').value) || 150;
+        settings.slab4 = parseFloat(document.getElementById('slab4').value) || 200;
+    }
+    setData('settings', settings);
+    alert('✅ تم حفظ الإعدادات');
+}
+
+// ------------------- BACKUP -------------------
+function exportData() {
+    const data = {
+        subscribers: getData('subscribers'),
+        meters: getData('meters'),
+        readings: getData('readings'),
+        bills: getData('bills'),
+        payments: getData('payments'),
+        users: getData('users'),
+        settings: getData('settings')
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    alert('✅ تم تصدير النسخة الاحتياطية');
+}
+function importData(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            Object.keys(data).forEach(key => setData(key, data[key]));
+            alert('✅ تم استيراد البيانات بنجاح! سيتم تحديث الشاشة.');
+            renderAll();
+        } catch(err) { alert('❌ ملف غير صالح'); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+}
+
+// ============================================================
+//  NOTIFICATIONS (Simulated)
+// ============================================================
+function showNotification() {
+    const msg = prompt('📨 أرسل إشعاراً جماعياً:', 'يرجى سداد فاتورة الكهرباء قبل تاريخ 30/07/2026');
+    if(msg) alert(`✅ تم إرسال الإشعار إلى جميع المشتركين:\n"${msg}"`);
+}
+
+// ============================================================
+//  MODAL HELPERS
+// ============================================================
+function openModal(title, bodyHTML) {
+    document.getElementById('modal-title').innerText = title;
+    document.getElementById('modal-body').innerHTML = bodyHTML;
+    document.getElementById('modal-overlay').style.display = 'flex';
+}
+function closeModal() {
+    document.getElementById('modal-overlay').style.display = 'none';
+}
+
+// ============================================================
+//  INIT with all subscribers from the lists
+// ============================================================
+function initializeSubscribers() {
+    // Define the lists as arrays of names
+    const line1 = [
+        "سيف الحرازي", "حسين الشيباني", "إبراهيم الشرفي", "عدلان العزي", "هاشم نجاد",
+        "عبدالإله الغرباني", "محمد الغرباني", "عبدالله الجوفي", "انور واصل", "سلطان حسين الشيباني",
+        "عبده يحيى الوصابي", "ابراهبم راصع", "وليد المطري", "توفيق الرداعي", "يحيى قاسم",
+        "حسين قاسم", "عبده قاسم", "الجوفي", "هاني المنج", "أحمد المنج",
+        "بكيل المنج", "محمد محمد المنج", "احمد نصر العماد", "عدنان جميل الوصابي", "عبدالغني الحرازي",
+        "محمد جميل الوصابي", "حاشد المطري", "محمد يحيى سنان", "حسين مرزاح", "ناصر الشيخ",
+        "سليم القحشله", "علي علي القديمي", "قناف هزاع", "محمد احسن العداء", "زائد محمد حمود الجمهوري",
+        "سلطان عبدالعزيز الجمهوري", "هلال الصعفاني", "محمد احمد الحفاشي", "عبدالله الشوتري", "عبدالله زبع",
+        "عبدالكريم زبع", "خالد محسن العذار", "حسين علي محمد العذار", "وليد الوضيني", "مختار عبدة شرف",
+        "الياس توفيق", "زائد سلطان العبسي", "منير ناصر الادبعي", "محمد دهمان", "نبيل المعقب",
+        "أصيل ناصر الادبعي"
+    ];
+
+    const line2 = [
+        "احمد ردمان", "ماهر الوصابي", "شوقي راغب", "فاضل البيت", "مختار المختار",
+        "عبدالرحمن الوصابي", "احمد الحكمي", "طاهر الحكمي", "ياسر الحفاشي", "ناصر الحفاشي",
+        "وليد قصعه", "بيت إبراهيم الشرفي", "غالب الاهدل", "محمد الاهدل", "العاقل سليم",
+        "عبدالله الاهدل", "احمد سعيد", "احمد صالح علي حميد", "نصار الحيدي", "بيت محمد العراقي",
+        "حمود العصري", "عقيل الوصابي", "ايمن دحان", "الشيخ حسن", "الريمي حسن الغصاني",
+        "احمد الديلمي", "اديب احمد فراحن", "إبراهيم الحاج", "زائد الحج", "هلال الزرقة",
+        "زكريا عبدالله", "الدكتور زياد", "صدام الوصابي", "رشاد", "احمد فرحان",
+        "بيت جعدان", "شعيب الجرادي", "عبدالله داوود الوصابي", "ناصر جعدان", "سمير جعدان",
+        "ابراهيم البرعي", "علي صالح الريمي", "عمار سعيد", "محمد الباجلي", "محمد البياضي",
+        "تميم الريمي", "عبدالله دبوان", "عمار الوصابي", "ياسين الريمي", "محمد زيد الجمرة",
+        "ياسين المحويتي", "ميثاق الشرعبي", "هاني الشميري", "جميل الحيدي", "محمد الحمادي",
+        "محمد علي الشامي", "عبدالله عارف", "ضيف الله الضبيبي", "جمال الشعب", "عدنان الشجني",
+        "إبراهيم الزنيم", "هايل سعيد", "نجم الدين المصعبي", "محمد السريحي", "موسى الوصابي",
+        "جبران", "عمت جبران", "وائل الوصابي", "على القديمي"
+    ];
+
+    const line3 = [
+        "ابو جهاد", "ملاطف", "فوئد المطري", "اكرم الرضيني", "علي عبده الحرازي",
+        "فواز الغصاني", "السياني", "ايوب الوصابي", "مروان", "امبن الموجاني",
+        "عمر هاشم", "مجاهد احمد صالح", "عماد الشرعبي", "عصام اخو فاضل", "مخبز مهابه",
+        "عبدالرحمن العولقي", "بشير الخامري", "محمد سيف", "ابراهيم البوفية", "عبدالله هادي",
+        "أبو شهاب الحرازي", "محمد مرزاح", "يحيى مطر", "خالد الجعدبي", "محمد الجعدبي",
+        "لادن الحرازي", "هواش", "مهدي المقوت", "حازم", "أحمد صلاح",
+        "الدكتور ياسين", "الدكتور ياسين البيت", "إبراهيم الصرابي", "بوفية راس النقيل", "مخبز الامتياز",
+        "زياد الذماري", "بنت الجوفي", "الفندم خالد", "زياد الذماري"
+    ];
+
+    const line4 = [
+        "فائز الوصابي", "عبدالإله الوصابي", "بشار الحيمي", "عبدالله عادل الحيدي", "عبدة مساوى",
+        "انور الوصابي", "علي حمود الحيمي", "جامع التوحيد", "حسين محمد الحاج", "خالد محمد الحاج",
+        "رياض المطري", "عبدالملك الحيدي", "يحيى الحيدي", "امين الحيدي", "هاني الصلوي",
+        "محمد احسن العدا", "ربيش الحمدي", "رشيد الشرفي", "سيف المختار", "محمد عبده الحرازي",
+        "اكرم العدني", "علي جرادي", "غريب العدني", "إسماعيل الغرباني", "عبدالله الغرباني",
+        "جهيمان الحرازي", "ثابت الجرادي", "بدر حيدر", "جامع الواعظ", "سامر",
+        "خالد العودي", "إبراهيم العولقي", "محمد قائد الرخام", "محمد احمد الشميري", "محمد سناباني",
+        "جابر المطري", "انور السناباني", "كمال الاهدل", "يوسف الاهدل", "خالد الحاوري",
+        "نجدي عبدالسلام", "مصنع عصير رواق", "علي الاحمدي", "حلمي العدني", "عبدالرزاق عبدالله سالم",
+        "بشير وليد الريمي", "بكيل الحمي", "حسن القديمي", "عماد الشرعبي", "هيثم التعزي",
+        "علاء علي القاضي", "محمد العوبلي", "محمد الذماري", "شرف الصياد", "فوئد يحيى الشميري"
+    ];
+
+    // Combine all with line_id
+    const allSubs = [];
+    let meterCounter = 1001; // start meter numbers
+
+    function addSubs(names, lineId) {
+        names.forEach(name => {
+            allSubs.push({
+                id: genId(),
+                name: name,
+                phone: '',
+                address: '',
+                national_id: '',
+                line_id: lineId,
+                type: 'منزلي',
+                meter_num: String(meterCounter++),
+                status: 'فعال'
+            });
+        });
+    }
+
+    addSubs(line1, 1);
+    addSubs(line2, 2);
+    addSubs(line3, 3);
+    addSubs(line4, 4);
+
+    // Save subscribers
+    setData('subscribers', allSubs);
+
+    // Also create meters for each subscriber
+    const meters = allSubs.map(s => ({
+        id: genId(),
+        meter_number: s.meter_num,
+        type: 'أحادي',
+        capacity: '10A',
+        installation_date: '2025-01-01',
+        status: 'فعال'
+    }));
+    setData('meters', meters);
+
+    // Optionally add some dummy readings (optional)
+    // We'll leave readings empty, user can add later.
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+if(getData('settings').length === 0) setData('settings', { tariff: 'slab', slab1:80, slab2:120, slab3:150, slab4:200 });
+if(getData('users').length === 0) {
+    setData('users', [
+        {id:1, username:'admin', password:'admin', role:'مدير النظام'},
+        {id:2, username:'accountant', password:'accountant', role:'محاسب'},
+        {id:3, username:'reader', password:'reader', role:'قارئ عدادات'},
+        {id:4, username:'supervisor', password:'supervisor', role:'مشرف'}
+    ]);
+}
+
+// If no subscribers, initialize with the full lists
+if(getData('subscribers').length === 0) {
+    initializeSubscribers();
+    // After adding, generate bills automatically for all (if readings exist, but we don't have readings yet)
+    // So we may skip or add sample readings.
+    // We'll add a few sample readings for first few subscribers.
+    const subs = getData('subscribers');
+    const sampleReadings = subs.slice(0, 10).map(s => ({
+        id: genId(),
+        subscriber_id: s.id,
+        previous_reading: 1000,
+        current_reading: 1100 + Math.floor(Math.random()*200),
+        consumption: 100 + Math.floor(Math.random()*200),
+        reading_date: '2026-06-20'
+    }));
+    setData('readings', sampleReadings);
+    // Generate bills for all (will use readings)
+    generateBillsForAll();
+} else {
+    // If data exists, just ensure we have meters for all subscribers (maybe missing)
+    const subs = getData('subscribers');
+    const meters = getData('meters');
+    const existingMeters = meters.map(m => m.meter_number);
+    let newMeters = [];
+    subs.forEach(s => {
+        if(!existingMeters.includes(s.meter_num)) {
+            newMeters.push({
+                id: genId(),
+                meter_number: s.meter_num,
+                type: 'أحادي',
+                capacity: '10A',
+                installation_date: '2025-01-01',
+                status: 'فعال'
+            });
+        }
+    });
+    if(newMeters.length > 0) {
+        setData('meters', meters.concat(newMeters));
+    }
+}
+
+// Start
+navigate('login');
+</script>
+</body>
+</html>
